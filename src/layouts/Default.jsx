@@ -29,7 +29,7 @@ const LoadingFallback = () => (
 );
 
 
-// eslint-disable-next-line react/prop-types
+
 const AppRoutes = (accessToken) => {
   const [user] = useAtom(userAtom);
   const [loading] = useAtom(loadingAtom);
