@@ -6,10 +6,12 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
-import VideoListPage from "@/pages/VideoListPage";
+// import VideoListPage from "@/pages/VideoListPage";
 import UserManagement from "@/components/admin/User/UserManagement";
 import UserForm from "@/components/admin/User/UserForm";
 import VideoManagement from "@/components/admin/Video/VideoManagement";
+import UserLayout from "@/layouts/UserLayout";
+
 
 import { useAtom } from "jotai";
 import { 
@@ -18,10 +20,11 @@ import {
   loadingAtom,
   decodeToken,
  } from "@/atoms/authAtom";
+// import Home from "@/pages/Home";
 
 
 const VideoGenerate = lazy(() => import("@/pages/VideoGenerate"));
-
+// const SidebarUser = lazy(() => import("@/components/SidebarUser"));
 const LoadingFallback = () => (
   <Center h="100vh">
     <Spinner size="xl" color="blue.500" />
@@ -39,7 +42,7 @@ const AppRoutes = (accessToken) => {
     if (!accessToken || !user) return "/login";
 
     const roles = Array.isArray(user?.roles) ? user.roles : [user?.roles].filter(Boolean);
-  
+    // Chưa hoạt động đúng cách
     if (roles.includes("admin")) return "/admin";
     return "/video/create";
   };
@@ -76,17 +79,19 @@ const AppRoutes = (accessToken) => {
           <ProtectedRoute requiredRole='admin'>
             <VideoManagement />
           </ProtectedRoute>
-        } /> 
-        <Route path="/video/create" element={
+        } />
+
+
+        {/* Page User */}
+        <Route path="/video" element={
           <ProtectedRoute>
-            <VideoGenerate />
+            <UserLayout />
           </ProtectedRoute>
-        }/>
-        <Route path="/video/list" element={
-          <ProtectedRoute>
-            <VideoListPage />
-          </ProtectedRoute>
-        }/>
+        }>
+          <Route path="create" element={<VideoGenerate/>} />
+          {/* <Route path="test" element={<Home/>} /> */}
+          {/* <Route path="list" element={<VideoListPage />} /> */}
+        </Route>
       </Routes>
     </Suspense>
   )

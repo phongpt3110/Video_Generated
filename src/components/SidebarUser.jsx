@@ -1,46 +1,38 @@
+/* eslint-disable react/prop-types */
 import { Box, VStack, Text } from "@chakra-ui/react";
 import { NavLink } from 'react-router';
 
-// eslint-disable-next-line react/prop-types
-const ChatSidebar = ({ onItemClick }) => {
+const SidebarUser = ({ onItemClick }) => {
+  const navLinkStyle = ({ isActive }) => ({
+    fontWeight: isActive ? 'bold' : 'normal',
+    backgroundColor: isActive ? '#EDF2F7' : 'transparent',
+    padding: '8px',
+    borderRadius: '8px',
+    textDecoration: 'none',
+  });
+
   return (
     <Box
       h="100vh"
-      w="200px"
-      borderRight="1pxs"
+      w="220px"
+      borderRight="1px solid"
       borderColor="gray.200"
       bg="white"
-      _dark={{
-        bg: "gray.800",
-        borderColor: "gray.700",
-      }}
       p={4}
     >
       <VStack spacing={4} align="stretch">
-        <Text fontSize="xl" fontWeight="bold">
-          Video App
-        </Text>
-        <NavLink to="/video/create" onClick={onItemClick}>
-          <Text
-            p={2}
-            borderRadius="md"
-            _hover={{ bg: "gray.100", _dark: { bg: "gray.700" } }}
-          >
-            Create Video
-          </Text>
+        <Text fontSize="xl" fontWeight="bold" textAlign="center">Video App</Text>
+
+        <NavLink to="/video/create" style={navLinkStyle} onClick={onItemClick}>
+          Create Video
         </NavLink>
-        <NavLink to="/video/list" onClick={onItemClick}>
-          <Text
-            p={2}
-            borderRadius="md"
-            _hover={{ bg: "gray.100", _dark: { bg: "gray.700" } }}
-          >
-            Video List
-          </Text>
-        </NavLink>
+        {/* <NavLink to="/video/test" style={navLinkStyle} onClick={onItemClick}>
+          Test
+        </NavLink> */}
+
       </VStack>
     </Box>
   );
 };
 
-export default ChatSidebar;
+export default SidebarUser;

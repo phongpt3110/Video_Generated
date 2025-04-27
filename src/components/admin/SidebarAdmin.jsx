@@ -79,8 +79,8 @@ const SidebarAdmin = ({ onItemClick }) => {
         <NavItem icon={<FaTable />} label="Dashboard" to="/admin" />
         <NavItem icon={<FaUserFriends />} label="Tài khoản" to="/admin/users" />
         <NavItem icon={<FaVideo />} label="Video" to="/admin/videos" />
-        <LogoutItem icon={<FaSignOutAlt />} label="Log Out" />
         <NavItem icon={< FaHome/>} label="Home" to="/video/create" />
+        <LogoutItem icon={<FaSignOutAlt />} label="Log Out" />
       </VStack>
     </Box>
   );

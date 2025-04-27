@@ -8,8 +8,6 @@ import {
   AbsoluteCenter,
   Button,
   createListCollection,
-  IconButton,
-  useDisclosure,
   useBreakpointValue,
   Flex,
   Text,
@@ -27,15 +25,12 @@ import {
   SelectTrigger,
   SelectValueText,
 } from "@/components/ui/select";
-import { ColorModeButton, useColorModeValue } from "@/components/ui/color-mode";
+import { useColorModeValue } from "@/components/ui/color-mode";
 import { Field } from "@/components/ui/field";
-import { DrawerRoot, DrawerBody, DrawerContent } from '@/components/ui/drawer';
-import { LuSend, LuMenu, LuFileUp } from "react-icons/lu";
+import { LuSend, LuFileUp } from "react-icons/lu";
 import { Toaster, toaster } from '@/components/ui/toaster';
 
 import { useNavigate } from 'react-router';
-import ChatSidebar from "@/components/SidebarUser";
-import { Infomation } from "@/components/Infomation";
 import api from "@/api";
 import { useAtom } from "jotai";
 import {
@@ -43,6 +38,7 @@ import {
   loadingAtom,
   logoutAtom,
 } from "@/atoms/authAtom.js";
+import MessageWelcome from "@/components/MessageWelcome";
 
 const ratios = createListCollection({
   items: [
@@ -77,7 +73,7 @@ const VideoCreatePage = () => {
   const [loading, setLoading] = useAtom(loadingAtom);
   const [, logout] = useAtom(logoutAtom);
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  // const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Fetch media URLs for the created video
@@ -243,62 +239,14 @@ const VideoCreatePage = () => {
   return (
     <Box display="flex" position="relative" minH="100vh">
       <Toaster />
-      <Flex position="absolute" top="4" right="4" zIndex="100" align="center" gap="2">
-        <ColorModeButton />
-        <Infomation />
-      </Flex>
-
-      {isMobile && (
-        <Box position="absolute" top="4" left="4" zIndex="100">
-          <IconButton
-            aria-label="Open Menu"
-            onClick={onOpen}
-            variant="ghost"
-            size="md"
-          >
-            <LuMenu />
-          </IconButton>
-        </Box>
-      )}
-
-      {isMobile && (
-        <DrawerRoot placement="left" onClose={onClose} isOpen={isOpen}>
-          <DrawerContent maxWidth="30%">
-            <DrawerBody p={0}>
-              <ChatSidebar onItemClick={onClose} />
-            </DrawerBody>
-          </DrawerContent>
-        </DrawerRoot>
-      )}
-
-      {!isMobile && (
-        <Box
-          position="fixed"
-          left="0"
-          top="0"
-          h="100vh"
-          w="200px"
-          borderRight="1px"
-          borderColor="gray.200"
-          bg="white"
-          _dark={{
-            bg: "gray.800",
-            borderColor: "gray.700",
-          }}
-        >
-          <ChatSidebar />
-        </Box>
-      )}
-
       <Box
         flex="1"
-        ml={isMobile ? 0 : "200px"}
         transition="margin 0.3s ease"
         position="relative"
         minH="100vh"
         width={isMobile ? "100%" : "70%"}
       >
-        <AbsoluteCenter axis="both" w={["90%", "85%", "80%", "70%"]}>
+        <AbsoluteCenter axis="both" w="full">
           <VStack spacing={4} w="full" h="100vh">
             <Box
               flex="1"
@@ -353,7 +301,6 @@ const VideoCreatePage = () => {
                     )}
                   </Box>
 
-                  {/* Display Generated Text */}
                   <Box>
                     <Text fontWeight="medium">Generated Text:</Text>
                     {createdVideo.generatedText ? (
@@ -365,7 +312,7 @@ const VideoCreatePage = () => {
                 </Box>
               ) : (
                 <Text textAlign="center" color="gray.500">
-                  Create a new video to see the result here!
+                  <MessageWelcome/>
                 </Text>
               )}
             </Box>
@@ -375,6 +322,7 @@ const VideoCreatePage = () => {
               position="sticky"
               boxShadow="lg"
               borderRadius="xl"
+              mb="6"
               bg="white"
               overflow="hidden"
               _dark={{
@@ -420,7 +368,7 @@ const VideoCreatePage = () => {
                           </SelectItem>
                         ))}
                       </SelectContent>
-                    </SelectRoot>
+                    </SelectRoot> 
                   </Box>
 
                   <Box

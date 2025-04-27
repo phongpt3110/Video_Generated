@@ -5,3 +5,6 @@
 .ant-select-selector {
   border: none !important;
 }
+html{
+  overflow: hidden;
+}
