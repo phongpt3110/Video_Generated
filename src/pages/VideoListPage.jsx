@@ -6,9 +6,15 @@ import {
   Image,
   Button,
   Spinner,
+  Group,
+  Input,
+  
+  // InputRightElement,
 } from "@chakra-ui/react";
 
 import { Tooltip } from "@/components/ui/tooltip"
+import { FaSearch } from "react-icons/fa";
+import { MdClear } from "react-icons/md";
 import { LuMenu } from "react-icons/lu";
 import { BiRefresh } from "react-icons/bi";
 import { Toaster, toaster } from '@/components/ui/toaster';
@@ -24,11 +30,12 @@ import { videosAtom, mediaUrlsAtom, loadingMediaAtom, isFetchingAtom, refreshTri
 const VideoListPage = () => {
   const [videos, setVideos] = useAtom(videosAtom);
   const [mediaUrls, setMediaUrls] = useAtom(mediaUrlsAtom);
-  const [loadingMedia, setLoadingMedia] = useAtom(loadingMediaAtom); // Trạng thái loading cho từng file
+  const [loadingMedia, setLoadingMedia] = useAtom(loadingMediaAtom); 
   const [refreshTrigger, setRefreshTrigger] = useAtom(refreshTriggerAtom);
   const [isFetching, setIsFetching] = useAtom(isFetchingAtom);
   const [loading, setLoading] = useAtom(loadingAtom);
 
+  const [searchTerm, setSearchTerm] = useState("");
   const [attemptedVideos, setAttemptedVideos] = useState({});
 
   const navigate = useNavigate();
@@ -105,7 +112,7 @@ const VideoListPage = () => {
 
     // Danh dấu video đã được tải or thử tải
     setLoadingMedia(prev => ({ ...prev, [`video-${video._id}`]: true }));
-    setAttemptedVideos(prev => ({ ...prev, [video._id]: true })); // Đánh dấu video đã thử tải
+    setAttemptedVideos(prev => ({ ...prev, [video._id]: true })); 
     try {
       // Video URL fetch
       if (video._id) {
@@ -184,7 +191,7 @@ const VideoListPage = () => {
   
   // Fetch videos khi component mount hoặc khi refreshTrigger thay đổi
   useEffect(() => {
-    if (accessToken) { // Chỉ gọi nếu có accessToken
+    if (accessToken) { 
       fetchUserVideos();
     }
     // Cleanup function 
@@ -220,10 +227,33 @@ const VideoListPage = () => {
     };
   }, []);
 
+  // Xóa từ khóa tìm kiếm
+  const clearSearch = useCallback(() => {
+    setSearchTerm("");
+  }, []);
+
+  // Search videos based on filename or generated text
+  const filteredVideos = useMemo(() => {
+    if (!searchTerm.trim()) return videos;
+
+    return videos.filter(video => {
+      // Theo file name
+      if(video.filename && video.filename.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return true;
+      }
+        // Tìm kiếm theo nội dung text được sinh ra
+      if (video.generatedText && video.generatedText.content && 
+          video.generatedText.content.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return true;
+      }
+      return false;
+    })
+  }, [videos, searchTerm,]);
+
   const videoList = useMemo(() => {
-    return videos && videos.length > 0 ? (
+    return filteredVideos && filteredVideos.length > 0 ? (  
       <VStack spacing={6} align="stretch">
-        {videos.map((video, videoIndex) => (
+        {filteredVideos.map((video, videoIndex) => (
           <Box key={video._id || videoIndex} borderWidth="1px" borderRadius="lg" p={4}>
             <Text fontWeight="bold" fontSize="lg" mb={2}>
               Video {videoIndex + 1} {video.filename ? `- ${video.filename}` : ''}
@@ -314,7 +344,7 @@ const VideoListPage = () => {
                 <Text>No video available</Text>
               )}
             </Box>
-
+              {/* Hiển thị generateText */}
             <Box mt={4}>
               <Text fontWeight="medium">Generated Text:</Text>
               {video.generatedText ? (
@@ -328,26 +358,60 @@ const VideoListPage = () => {
       </VStack>
     ) : (
       <Box textAlign="center" p={10} borderWidth="1px" borderRadius="lg">
-        <Text color="gray.500" mb={4}>
-          No videos available. Create a new video to get started!
-        </Text>
-        <Button
-          colorScheme="blue"
-          onClick={() => navigate('/video/create')}
-        >
-          Create New Video
-        </Button>
+        {searchTerm ? (
+          // Hiển thị khi tìm kiếm không có kết quả
+          <VStack spacing={4}>
+            <Text color="gray.500">
+              No videos found matching &quot;<strong>{searchTerm}</strong>&quot;
+            </Text>
+            <Button
+              colorScheme="blue"
+              onClick={clearSearch}
+            >
+              Clear Search
+            </Button>
+          </VStack>
+        ) : (
+          // Hiển thị khi không có video nào
+          <Text color="gray.500" mb={4}>
+            No videos available. Create a new video to get started!
+          </Text>
+        )}
+        {!searchTerm && (
+          <Button
+            colorScheme="blue"
+            onClick={() => navigate('/video/create')}
+          >
+            Create New Video
+          </Button>
+        )}
       </Box>
     );
-  }, [videos, mediaUrls, loadingMedia, attemptedVideos, navigate, retryFetchVideo]);
+  }, [filteredVideos, searchTerm, mediaUrls, loadingMedia, attemptedVideos, navigate, retryFetchVideo, clearSearch]);
 
   return (
     <Box display="flex" position="relative" minH="100vh">
       <Toaster />
       <Flex position="absolute" top="4" right="4" zIndex="100" align="center" gap="2">
-        {/* <Tooltip content="Giao diện" openDelay={400} >
-          <ColorModeButton />
-        </Tooltip> */}
+          <Group startElement={<FaSearch  />}>
+            <Input 
+              placeholder="Search videos" 
+              color='black' 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              pr="4.5rem"
+            />
+            {/* Thêm icon tìm kiếm */}
+            <Button width="3rem" h={"2.5rem"}>
+              <Flex>
+                {searchTerm ? (
+                  <Button h="1.75rem" size="xl" onClick={clearSearch} mr="1">
+                    <MdClear />
+                  </Button>
+                ) : <FaSearch color="gray.300" />}
+              </Flex>
+            </Button>
+          </Group>
         <Tooltip content="Thông tin người dùng" openDelay={400} >
           <Infomation />
         </Tooltip>
@@ -365,7 +429,10 @@ const VideoListPage = () => {
             <Flex justifyContent="space-between" w="full" mb={4}>
             <Tooltip content="Làm mới" openDelay={400} >
                 <Button
-                  onClick={() => setRefreshTrigger(prev => prev + 1)}
+                  onClick={() => {
+                    setRefreshTrigger(prev => prev + 1)
+                    setSearchTerm("");
+                  }}
                   colorScheme="blue"
                   variant="normal"  
                   bg="transparent"
@@ -377,6 +444,9 @@ const VideoListPage = () => {
                 </Button>
               </Tooltip>
             </Flex>
+
+            {/* {searchResults} */}
+
             <Box
               w="full"
               p={4}

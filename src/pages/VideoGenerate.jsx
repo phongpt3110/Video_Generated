@@ -27,8 +27,9 @@ import {
 } from "@/components/ui/select";
 import { useColorModeValue } from "@/components/ui/color-mode";
 import { Field } from "@/components/ui/field";
-import { LuSend, LuFileUp } from "react-icons/lu";
+import { LuSend, LuFileUp, LuImage, LuClock,  LuMusic } from "react-icons/lu";
 import { Toaster, toaster } from '@/components/ui/toaster';
+import { RiChatVoiceAiLine } from "react-icons/ri";
 
 import { useNavigate } from 'react-router';
 import api from "@/api";
@@ -57,11 +58,22 @@ const durations = createListCollection({
   ],
 });
 
+const voices = createListCollection({
+  items: [
+    { label: "Ash", value: "ash" },
+    { label: "Onyx", value: "onyx" },
+    { label: "Alloy", value: "alloy" },
+    { label: "Ballad", value: "ballad" },
+    { label: "Coral", value: "coral" },
+  ]
+})
+
 const VideoCreatePage = () => {
   const [prompt, setPrompt] = useState("");
   const [ratio, setRatio] = useState("");
   const [duration, setDuration] = useState("");
   const [file, setFile] = useState(null);
+  const [voice, setVoice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdVideo, setCreatedVideo] = useState(null); // Lưu video vừa tạo
   const [mediaUrls, setMediaUrls] = useState({}); // Lưu URL của video, images, audio
@@ -70,7 +82,7 @@ const VideoCreatePage = () => {
   const buttonColor = useColorModeValue('black', 'white');
 
   const [accessToken] = useAtom(accessTokenAtom);
-  const [loading, setLoading] = useAtom(loadingAtom);
+  const [loading, ] = useAtom(loadingAtom);
   const [, logout] = useAtom(logoutAtom);
 
   // const { isOpen, onOpen, onClose } = useDisclosure();
@@ -320,7 +332,7 @@ const VideoCreatePage = () => {
             <Box
               w="full"
               position="sticky"
-              boxShadow="lg"
+              boxShadow="xl"
               borderRadius="xl"
               mb="6"
               bg="white"
@@ -348,20 +360,30 @@ const VideoCreatePage = () => {
 
                 <HStack p={2} spacing={4} justifyContent="space-between">
                   <Box
-                    width={["45%", "150px"]}
+                    width={["30%"]}
                     transition="all 0.2s ease"
                     _hover={{ "& > div": { boxShadow: "md", bg: "gray.100" } }}
                   >
                     <SelectRoot
                       required
                       collection={durations}
-                      value={duration ? [duration] : []}
-                      onValueChange={(e) => setDuration(e.value)}
+                      value={duration || ""}  
+                      onValueChange={(e) => {
+                        const newValue = e.value;
+                        setDuration(newValue); 
+                      }}
                     >
-                      <SelectTrigger transition="all 0.2s ease">
+                      <SelectTrigger
+                        transition="all 0.2s ease"
+                        paddingLeft="2.2rem"
+                        position="relative"
+                      >
+                        <Box position="absolute" left="0.75rem" top="50%" transform="translateY(-50%)">
+                          <LuClock size="18px" /> 
+                        </Box>
                         <SelectValueText placeholder="Duration" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent >
                         {durations.items.map((option) => (
                           <SelectItem item={option} key={option.value}>
                             {option.label}
@@ -370,10 +392,9 @@ const VideoCreatePage = () => {
                       </SelectContent>
                     </SelectRoot> 
                   </Box>
-
+                  {/* Select radio  */}
                   <Box
-                    width={["45%", "150px"]}
-                    // marginEnd="auto"
+                    width={"30%"}
                     transition="all 0.2s ease"
                     _hover={{ "& > div": { boxShadow: "md", bg: "gray.100" } }}
                   >
@@ -386,9 +407,16 @@ const VideoCreatePage = () => {
                         setRatio(selectedRatio);
                       }}
                     >
-                      <SelectTrigger transition="all 0.2s ease">
-                        <SelectValueText placeholder="Ratio" />
-                      </SelectTrigger>
+                       <SelectTrigger
+                          transition="all 0.2s ease"
+                          paddingLeft="2rem"  // chừa chỗ icon
+                          position="relative"
+                        >
+                          <Box position="absolute" left="8px" top="50%" transform="translateY(-50%)">
+                            <LuImage size={16} />
+                          </Box>
+                          <SelectValueText placeholder="Ratio" />
+                        </SelectTrigger>
                       <SelectContent>
                         {ratios.items.map((option) => (
                           <SelectItem item={option} key={option.value}>
@@ -399,45 +427,41 @@ const VideoCreatePage = () => {
                     </SelectRoot>
                   </Box>
 
+                  {/* Select voice  */}
                   <Box
-                    width={["45%", "150px"]}
-                    marginEnd="auto"
+                    width={"30%"}
                     transition="all 0.2s ease"
                     _hover={{ "& > div": { boxShadow: "md", bg: "gray.100" } }}
                   >
-                    <FileUpload.Root
-                      gap="1"
-                      value={file ? [file] : []}
-                      accept={[".mp3", ".wav", ".ogg"]}
-                      onChange={(e) => {
-                        const selectedFile = e.target.files[0];
-                        setFile(selectedFile);
-                      }}
+                    <SelectRoot
                       required
+                      collection={voices}
+                      value={voice || " "}
+                      onValueChange={(e) => {
+                        const selectedVoice = e.value;
+                        setVoice(selectedVoice)
+                      }}
                     >
-                      <FileUpload.HiddenInput />
-                      <InputGroup
-                        startElement={<LuFileUp />}
-                        endElement={
-                          <FileUpload.ClearTrigger asChild>
-                            <CloseButton
-                              me="-1"
-                              size="xs"
-                              variant="plain"
-                              focusVisibleRing="inside"
-                              focusRingWidth="2px"
-                              pointerEvents="auto"
-                            />
-                          </FileUpload.ClearTrigger>
-                        }
+                      <SelectTrigger
+                        transition="all 0.2s ease"
+                        paddingLeft="2rem"  
+                        position="relative"
                       >
-                        <Input asChild>
-                          <FileUpload.Trigger>
-                            <FileUpload.FileText lineClamp={1} />
-                          </FileUpload.Trigger>
-                        </Input>
-                      </InputGroup>
-                    </FileUpload.Root>
+                        <Box position="absolute" left="8px" top="50%" transform="translateY(-50%)">
+                            <RiChatVoiceAiLine  size="18px" />
+                        </Box>
+                        <SelectValueText placeholder="Voice" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {voices.items.map((option) => (
+                          <SelectItem
+                            item={option} key={option.value}
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </SelectRoot>
                   </Box>
 
                   <Button
@@ -457,6 +481,59 @@ const VideoCreatePage = () => {
                     {isSubmitting ? <Spinner size="sm" /> : <LuSend />}
                   </Button>
                 </HStack>
+
+                <HStack pb={2} px={2} spacing={4} justifyContent="space-between">
+                <Box
+                    width={"30%"}
+                    marginEnd="auto"
+                    transition="all 0.2s ease"
+                    _hover={{ "& > div": { boxShadow: "md", bg: "gray.100" } }}
+                  >
+                    <FileUpload.Root
+                      gap="1"
+                      value={file ? [file] : []}
+                      accept={[".mp3", ".wav", ".ogg"]}
+                      onChange={(e) => {
+                        const selectedFile = e.target.files[0];
+                        setFile(selectedFile);
+                      }}
+                      required
+                    > 
+                      <FileUpload.HiddenInput />
+                      <Flex 
+                        transition="all 0.2s ease"
+                        paddingLeft="2rem"  // chừa chỗ icon
+                        position="relative"
+                      >
+                        <Box position="absolute" left="8px" top="50%" transform="translateY(-50%)">
+                          <LuMusic size="18px" />
+                        </Box>
+                        <InputGroup
+                          // startElement={}
+                          endElement={
+                            <FileUpload.ClearTrigger asChild>
+                              <CloseButton
+                                me="-1"
+                                size="xs"
+                                variant="plain"
+                                focusVisibleRing="inside"
+                                focusRingWidth="2px"
+                                pointerEvents="auto"
+                              />
+                            </FileUpload.ClearTrigger>
+                          }
+                        >
+                          <Input asChild>
+                            <FileUpload.Trigger>
+                              <FileUpload.FileText lineClamp={1} />
+                            </FileUpload.Trigger>
+                          </Input>
+                        </InputGroup>
+                      </Flex>
+                    </FileUpload.Root>
+                  </Box>
+                </HStack>
+                
               </form>
             </Box>
           </VStack>

@@ -35,7 +35,7 @@ export const HeaderAdmin = ({ searchTerm, setSearchTerm}) => {
           bg='transparent'
         >
           <FaUserCircle />
-          Sign In
+          User
         </Button>
 
       </HStack>

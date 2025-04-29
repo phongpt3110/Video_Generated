@@ -18,10 +18,6 @@ import {
   videosAtom, 
   videosLoadingAtom, 
   totalPagesAtom,
-  // searchTermAtom,
-  // currentPageAtom,
-  // startDateAtom,
-  // endDateAtom,
 } from "@/atoms/videoAtom";
 import api from "@/api";
 import { toaster } from "@/components/ui/toaster";
@@ -171,7 +167,7 @@ const VideoManagement = () => {
 
   // --- Handle Filtering ---
   const handleFilter = async () => {
-    setCurrentPage(1);        // Reset trang về 1
+    setCurrentPage(1);      // Reset trang về 1
     await fetchVideos();    // Gọi API
   };
 
