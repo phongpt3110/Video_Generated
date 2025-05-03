@@ -39,7 +39,7 @@ import {
   loadingAtom,
   logoutAtom,
 } from "@/atoms/authAtom.js";
-import MessageWelcome from "@/components/MessageWelcome";
+import MessageWelcome from "@/components/user/MessageWelcome";
 
 const ratios = createListCollection({
   items: [
@@ -60,11 +60,12 @@ const durations = createListCollection({
 
 const voices = createListCollection({
   items: [
-    { label: "Ash", value: "ash" },
+    { label: "Echo", value: "echo" },
     { label: "Onyx", value: "onyx" },
     { label: "Alloy", value: "alloy" },
-    { label: "Ballad", value: "ballad" },
-    { label: "Coral", value: "coral" },
+    { label: "Fable", value: "fable" },
+    { label: "Nova(F)", value: "nova" },
+    { label: "Shimmer", value: "shimmer" },
   ]
 })
 
@@ -146,7 +147,7 @@ const VideoCreatePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!prompt || !ratio || !duration || !file) {
+    if (!prompt || !ratio || !duration || !file || !voice) {
       toaster.create({
         title: 'Missing Fields',
         description: 'Please fill in all fields!',
@@ -162,6 +163,8 @@ const VideoCreatePage = () => {
 
     const formData = new FormData();
     formData.append('prompt', prompt);
+    const voiceString = Array.isArray(voice) ? voice[0] : voice
+    formData.append('voice', voiceString);
     const durationValue = Array.isArray(duration) ? duration[0] : duration;
     formData.append('duration', durationValue);
     if (file) {
@@ -193,7 +196,7 @@ const VideoCreatePage = () => {
     formData.append('height', height);
 
     try {
-      console.log("Sending data to backend:", { prompt, duration, width, height, file });
+      console.log("Sending data to backend:", { prompt, duration: durationValue , width, height, file, voice:voiceString });
       const response = await api.post('/video/generate-video', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -214,6 +217,7 @@ const VideoCreatePage = () => {
       setPrompt("");
       setRatio("");
       setDuration("");
+      setVoice("");
       setFile(null);
       
     } catch (error) {
@@ -439,7 +443,7 @@ const VideoCreatePage = () => {
                       value={voice || " "}
                       onValueChange={(e) => {
                         const selectedVoice = e.value;
-                        setVoice(selectedVoice)
+                        setVoice(selectedVoice);
                       }}
                     >
                       <SelectTrigger

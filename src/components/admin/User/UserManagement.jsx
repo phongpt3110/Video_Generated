@@ -6,7 +6,7 @@ import {
 import { toaster } from "@/components/ui/toaster";
 
 import { HeaderAdmin } from '@/components/admin/HeaderAdmin';
-import SidebarAdmin from "@/components/admin/SidebarAdmin";
+// import SidebarAdmin from "@/components/admin/SidebarAdmin";
 import TableUser from "@/components/admin/User/TableUser";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -70,14 +70,6 @@ const UserManagement = () => {
 
   return (
     <Flex h='100vh' bg='white'>
-      <Box
-        shadow='xs'
-        m='2'
-        borderRadius='4xl'
-        borderColor="blue.800"
-      >
-        <SidebarAdmin/>
-      </Box>
       <Box flex='1' p={6}>
         <VStack>
           <Heading size="lg" mb={4} w='full'>

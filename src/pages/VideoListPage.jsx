@@ -8,7 +8,8 @@ import {
   Spinner,
   Group,
   Input,
-  
+  Dialog, 
+  Portal,
   // InputRightElement,
 } from "@chakra-ui/react";
 
@@ -21,11 +22,12 @@ import { Toaster, toaster } from '@/components/ui/toaster';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from 'react-router';
-import { Infomation } from "@/components/Infomation";
+import { Infomation } from "@/components/user/Infomation";
 import api from "@/api";
 import { useAtom } from "jotai";
 import { accessTokenAtom, logoutAtom, } from "@/atoms/authAtom.js";
 import { videosAtom, mediaUrlsAtom, loadingMediaAtom, isFetchingAtom, refreshTriggerAtom, loadingAtom } from "@/atoms/videoAtom.js";
+import { userAtom } from "@/atoms/userAtom";
 
 const VideoListPage = () => {
   const [videos, setVideos] = useAtom(videosAtom);
@@ -34,6 +36,9 @@ const VideoListPage = () => {
   const [refreshTrigger, setRefreshTrigger] = useAtom(refreshTriggerAtom);
   const [isFetching, setIsFetching] = useAtom(isFetchingAtom);
   const [loading, setLoading] = useAtom(loadingAtom);
+  const [,setUser] = useAtom(userAtom)
+  const [deletingVideos, setDeletingVideos] = useState({});
+
 
   const [searchTerm, setSearchTerm] = useState("");
   const [attemptedVideos, setAttemptedVideos] = useState({});
@@ -123,13 +128,9 @@ const VideoListPage = () => {
             timeout: 60000, // Tăng timeout lên 60 giây
           });
 
-
-          const contentType = videoResponse.headers['content-type'];
-          console.log(`Content-Type: ${contentType}`);
           if (videoResponse.data.size > 0) {
             const videoUrl = URL.createObjectURL(videoResponse.data);
             setMediaUrls(prev => ({ ...prev, [`video-${video._id}`]: videoUrl }));
-            console.log(`Created video URL: ${videoUrl}`);
           } else {
             console.warn(`Video data is empty for ID: ${video._id}`);
           }
@@ -163,15 +164,12 @@ const VideoListPage = () => {
     } catch (error) {
       console.error(`General error fetching media for video ${video._id}:`, error);
     } finally {
-      console.log("---- Log thông báo finally")
-      // Cập nhật trạng thái loading khi hoàn thành
       setLoadingMedia(prev => ({ ...prev, [`video-${video._id}`]: false }));
     }
   }, [accessToken, mediaUrls, loadingMedia, attemptedVideos,]);
 
   // Retry fetching a specific video
   const retryFetchVideo = useCallback((video) => {
-    // Reset attempted status for this video
     setAttemptedVideos(prev => {
       const updated = {...prev};
       delete updated[video._id];
@@ -227,6 +225,43 @@ const VideoListPage = () => {
     };
   }, []);
 
+  //Fetch infomation
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        if (!accessToken) {
+          navigate('/login',{ state : { error:"Please login to continue" }})
+          return
+        }
+        const response = await api.get('/user/me', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        // console.log("User data from backend:", response.data);
+        if (response.data.success) {
+          setUser(response.data.data);
+        } else {
+          throw new Error(response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error.message);
+        toaster.create({
+          title: "Fetch User Error",
+          description: "Failed to load user information. Please try again.",
+          type: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+        if (error.response?.status === 401) {
+          await logout();
+          navigate("/login", { state: { error: " " } });
+        }
+      }
+    }
+    fetchUser();
+  }, [accessToken, navigate, setUser, logout])
+
+
   // Xóa từ khóa tìm kiếm
   const clearSearch = useCallback(() => {
     setSearchTerm("");
@@ -249,6 +284,34 @@ const VideoListPage = () => {
       return false;
     })
   }, [videos, searchTerm,]);
+
+  const handleDeleteVideo = async (videoId) => {
+    setDeletingVideos((prev) => ({ ...prev, [videoId]: true }));
+    try {
+      await api.delete(`/video/${videoId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      toaster.create({
+        title: "Thành công",
+        description: "Xóa video thành công.",
+        type: "success",
+        duration: 3000,
+      });
+      fetchUserVideos();
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      toaster.create({
+        title: "Lỗi",
+        description: "Không thể xóa video.",
+        type: "error",
+        duration: 3000,
+      });
+    } finally {
+      setDeletingVideos((prev) => ({ ...prev, [videoId]: false }));
+    }
+  }
 
   const videoList = useMemo(() => {
     return filteredVideos && filteredVideos.length > 0 ? (  
@@ -322,10 +385,44 @@ const VideoListPage = () => {
                       href={mediaUrls[`video-${video._id}`]}
                       download={video.filename || `video-${videoIndex}.mp4`}
                       size="sm"
+                      _hover={{ bg: "black.100" }}
                       mt={2}
                     >
                       Download Video
                     </Button>
+                    <Dialog.Root>
+                      <Dialog.Trigger asChild>
+                        <Button variant="outline" bg="red.600" float="right" size="sm" mt={2} color="white" >
+                          Delete Video
+                        </Button>
+                      </Dialog.Trigger>
+                      <Portal>
+                        <Dialog.Backdrop />
+                        <Dialog.Positioner>
+                          <Dialog.Content>
+                            <Dialog.Header>
+                              <Dialog.Title>CONFIRM VIDEO DELETION</Dialog.Title>
+                            </Dialog.Header>
+                            <Dialog.Body>
+                              <p>
+                              You confirm to delete the video (named) with (mb). If you accept, please text OK
+                              </p>
+                            </Dialog.Body>
+                            <Dialog.Footer>
+                              <Dialog.ActionTrigger asChild>
+                                <Button variant="outline">Cancel</Button>
+                              </Dialog.ActionTrigger>
+                              <Button
+                                bg="red.500"
+                                _hover={{ bg: "red.300" }}
+                                onClick={()=> handleDeleteVideo(video._id)}
+                                isLoading={deletingVideos[video._id] || false}
+                              >OK</Button>
+                            </Dialog.Footer>
+                          </Dialog.Content>
+                        </Dialog.Positioner>
+                      </Portal>
+                    </Dialog.Root>
                   </Box>
                 ) : (
                   <Box>
@@ -402,7 +499,7 @@ const VideoListPage = () => {
               pr="4.5rem"
             />
             {/* Thêm icon tìm kiếm */}
-            <Button width="3rem" h={"2.5rem"}>
+            <Button width="4.5rem" h={"2.5rem"}>
               <Flex>
                 {searchTerm ? (
                   <Button h="1.75rem" size="xl" onClick={clearSearch} mr="1">
@@ -444,9 +541,6 @@ const VideoListPage = () => {
                 </Button>
               </Tooltip>
             </Flex>
-
-            {/* {searchResults} */}
-
             <Box
               w="full"
               p={4}

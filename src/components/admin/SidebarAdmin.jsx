@@ -2,7 +2,6 @@
 import { Box, Flex, Heading, VStack, Text } from "@chakra-ui/react";
 import { NavLink, useNavigate } from "react-router";
 import { FaTable, FaUserFriends, FaVideo, FaSignOutAlt, FaHome } from "react-icons/fa";
-// import { IoMdSettings } from "react-icons/io";
 import { useSetAtom } from "jotai";
 import { logoutAtom } from "@/atoms/authAtom"; // đường dẫn import tùy cấu trúc dự án
 
@@ -29,6 +28,7 @@ const SidebarAdmin = ({ onItemClick }) => {
             px={4}
             py={3}
             borderRadius="md"
+            shadow='xs'
             bg={isActive ? 'gray.200' : 'transparent'} 
             fontWeight={isActive ? 'bold' : 'normal'}
             _hover={{ bg: 'gray.200' }}

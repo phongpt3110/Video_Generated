@@ -6,7 +6,7 @@ import {
   Portal
 } from '@chakra-ui/react';
 import { 
-  LuSettings , 
+  // LuSettings , 
   LuLogOut , 
   LuUser , 
 } from 'react-icons/lu';
@@ -14,8 +14,11 @@ import { useNavigate } from 'react-router';
 import { toaster } from '@/components/ui/toaster';
 import { useAtom } from 'jotai';
 import { logoutAtom } from "@/atoms/authAtom";
+import { userAtom } from "@/atoms/userAtom";
 
-export const Infomation = () => {
+export const Infomation = ( ) => {
+
+  const [user, setUser] = useAtom(userAtom);
 
   const navigate = useNavigate()
   const [, logout] = useAtom(logoutAtom)
@@ -24,6 +27,7 @@ export const Infomation = () => {
       try {
         await logout();
         localStorage.removeItem('accessToken');
+        setUser(null);
         toaster.create({
           title: 'Logout Successful',
           description: 'You have been logged out.',
@@ -53,7 +57,7 @@ export const Infomation = () => {
           cursor="pointer"
           shape="rounded"
         >
-          <Avatar.Fallback name="User name" />
+          <Avatar.Fallback name={user?.fullName}/>
           <Avatar.Image />
         </Avatar.Root>
       </Menu.Trigger>
@@ -65,13 +69,13 @@ export const Infomation = () => {
         >
           <Menu.Content>
             <VStack 
-              spacing={2} 
+              gap={0}
               px={4} 
-              mb={2} 
+              mb={1} 
               align="start"
             >
-              <Text fontWeight="bold">John Doe</Text>
-              <Text fontSize="sm" color="gray.500">john.doe@example.com</Text>
+              <Text fontWeight="bold"> {user?.fullName}</Text>
+              <Text fontSize="sm" color="gray.500">{user?.email}</Text>
             </VStack>
             
             
@@ -81,13 +85,14 @@ export const Infomation = () => {
                   bg: 'blue.50', 
                   color: 'blue.500' 
                 }}
+                onClick={() => navigate('/profile')}
               >
                 <LuUser size={16} />
                 Profile
               </Menu.Item>
             </Menu.ItemGroup>
             <Menu.ItemGroup title="Account">
-              <Menu.Item 
+              {/* <Menu.Item 
                 _hover={{ 
                   bg: 'blue.50', 
                   color: 'blue.500' 
@@ -95,7 +100,7 @@ export const Infomation = () => {
               >
                 <LuSettings size={16} />
                 Settings
-              </Menu.Item>
+              </Menu.Item> */}
               <Menu.Item 
 
                 icon={<LuLogOut size={16} />}

@@ -10,7 +10,7 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { HeaderAdmin } from "@/components/admin/HeaderAdmin";
-import SidebarAdmin from "@/components/admin/SidebarAdmin";
+// import SidebarAdmin from "@/components/admin/SidebarAdmin";
 import { useState, useEffect } from "react";
 import { useAtom } from "jotai";
 import { accessTokenAtom } from "@/atoms/authAtom";
@@ -173,11 +173,6 @@ const VideoManagement = () => {
 
   return (
     <Flex h="100vh" bg="white">
-      {/* Thanh nav */}
-      <Box shadow="xs" m="2" borderRadius="4xl" borderColor="blue.800">
-        <SidebarAdmin />
-      </Box>
-
       {/* Thông tin cụ thể */}
       <Box flex="1" p={6}>
         <VStack spacing={6}>

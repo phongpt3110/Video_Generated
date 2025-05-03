@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 
 import { HeaderAdmin } from '@/components/admin/HeaderAdmin';
-import SidebarAdmin from "@/components/admin/SidebarAdmin";
+// import SidebarAdmin from "@/components/admin/SidebarAdmin";
 import { useEffect, useState } from 'react';
 import api from "@/api";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -43,10 +43,6 @@ const AdminDashboard = () => {
 
   return (
     <Flex h='100vh' bg='white'>
-      {/* Sidebar bên trái */}
-      <Box shadow='xs' m='2' borderRadius='4xl' borderColor="blue.800">
-        <SidebarAdmin />
-      </Box>
 
       {/* Nội dung chính bên phải */}
       <Box flex='1' p={6}>
