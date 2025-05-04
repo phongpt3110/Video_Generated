@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Box,
   VStack,
@@ -11,7 +11,6 @@ import {
   useBreakpointValue,
   Flex,
   Text,
-  Image,
   FileUpload,
   Input,
   InputGroup,
@@ -27,10 +26,9 @@ import {
 } from "@/components/ui/select";
 import { useColorModeValue } from "@/components/ui/color-mode";
 import { Field } from "@/components/ui/field";
-import { LuSend, LuFileUp, LuImage, LuClock,  LuMusic } from "react-icons/lu";
+import { LuSend, LuImage, LuClock, LuMusic } from "react-icons/lu";
 import { Toaster, toaster } from '@/components/ui/toaster';
 import { RiChatVoiceAiLine } from "react-icons/ri";
-
 import { useNavigate } from 'react-router';
 import api from "@/api";
 import { useAtom } from "jotai";
@@ -39,6 +37,7 @@ import {
   loadingAtom,
   logoutAtom,
 } from "@/atoms/authAtom.js";
+import { refreshTriggerAtom } from "@/atoms/videoAtom.js"; // Import refreshTriggerAtom
 import MessageWelcome from "@/components/user/MessageWelcome";
 
 const ratios = createListCollection({
@@ -67,7 +66,7 @@ const voices = createListCollection({
     { label: "Nova(F)", value: "nova" },
     { label: "Shimmer", value: "shimmer" },
   ]
-})
+});
 
 const VideoCreatePage = () => {
   const [prompt, setPrompt] = useState("");
@@ -76,73 +75,16 @@ const VideoCreatePage = () => {
   const [file, setFile] = useState(null);
   const [voice, setVoice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdVideo, setCreatedVideo] = useState(null); // Lưu video vừa tạo
-  const [mediaUrls, setMediaUrls] = useState({}); // Lưu URL của video, images, audio
 
   const navigate = useNavigate();
   const buttonColor = useColorModeValue('black', 'white');
 
   const [accessToken] = useAtom(accessTokenAtom);
-  const [loading, ] = useAtom(loadingAtom);
+  const [loading] = useAtom(loadingAtom);
   const [, logout] = useAtom(logoutAtom);
+  const [, setRefreshTrigger] = useAtom(refreshTriggerAtom); // Sử dụng refreshTriggerAtom
 
-  // const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false });
-
-  // Fetch media URLs for the created video
-  useEffect(() => {
-    if (!createdVideo) return;
-
-    const fetchMediaUrls = async () => {
-      const newUrls = {};
-
-      // Log createdVideo để kiểm tra dữ liệu
-      console.log("Created Video:", JSON.stringify(createdVideo, null, 2));
-      // Fetch video
-      if(createdVideo._id) {
-        try {
-          console.log(`Fetching video for ID: ${createdVideo._id}`);
-          const videoResponse = await api.get(`/video/download/${createdVideo._id}`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            responseType: 'blob',
-          });
-          newUrls[`video-${createdVideo._id}`] = URL.createObjectURL(videoResponse.data);
-          console.log(`Video URL created: ${newUrls[`video-${createdVideo._id}`]}`);
-        } catch (error) {
-          console.error(`Failed to load video ${createdVideo._id}:`, error.response?.data || error.message);
-        }
-      } else {
-        console.error("Cannot fetch video: createdVideo._id is undefined");
-      }
-
-      // Fetch images
-      if (Array.isArray(createdVideo.images) && createdVideo.images.length > 0) {
-        for (const image of createdVideo.images) {
-          if (image._id) {
-            try {
-              console.log(`Fetching image for ID: ${image._id}`);
-              const imageResponse = await api.get(`/video/download/image/${image._id}`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-                responseType: "blob",
-              });
-              newUrls[`image-${image._id}`] = URL.createObjectURL(imageResponse.data);
-              console.log(`Image URL created: ${newUrls[`image-${image._id}`]}`);
-            } catch (error) {
-              console.error(`Failed to load image ${image._id}:`, error.response?.data || error.message);
-            }
-          }
-        }
-      }
-
-      setMediaUrls(newUrls);
-    };
-
-    fetchMediaUrls();
-
-    return () => {
-      Object.values(mediaUrls).forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [createdVideo, accessToken, mediaUrls]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -159,11 +101,10 @@ const VideoCreatePage = () => {
     }
 
     setIsSubmitting(true);
-    setCreatedVideo(null); // Reset video trước khi tạo mới
 
     const formData = new FormData();
     formData.append('prompt', prompt);
-    const voiceString = Array.isArray(voice) ? voice[0] : voice
+    const voiceString = Array.isArray(voice) ? voice[0] : voice;
     formData.append('voice', voiceString);
     const durationValue = Array.isArray(duration) ? duration[0] : duration;
     formData.append('duration', durationValue);
@@ -196,7 +137,7 @@ const VideoCreatePage = () => {
     formData.append('height', height);
 
     try {
-      console.log("Sending data to backend:", { prompt, duration: durationValue , width, height, file, voice:voiceString });
+      console.log("Sending data to backend:", { prompt, duration: durationValue, width, height, file, voice: voiceString });
       const response = await api.post('/video/generate-video', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -207,19 +148,21 @@ const VideoCreatePage = () => {
 
       toaster.create({
         title: 'Video Generated',
-        description: 'Your video has been generated successfully.',
+        description: 'Your video has been generated successfully. Check it in Video List!',
         type: 'success',
         duration: 3000,
         isClosable: true,
       });
 
-      setCreatedVideo(response.data); // Lưu video vừa tạo
       setPrompt("");
       setRatio("");
       setDuration("");
       setVoice("");
       setFile(null);
-      
+
+      // Kích hoạt làm mới danh sách video trong VideoListPage
+      setRefreshTrigger(prev => prev + 1);
+
     } catch (error) {
       console.error("Error submitting form:", error.response?.data || error.message);
       toaster.create({
@@ -273,64 +216,9 @@ const VideoCreatePage = () => {
               wordBreak="break-word"
               borderRadius="md"
             >
-              {createdVideo ? (
-                <Box borderWidth="1px" borderRadius="lg" p={4}>
-                  <Text fontWeight="bold" fontSize="lg" mb={2}>
-                    Generated Video
-                  </Text>
-
-                  {/* Display Video */}
-                  <Box>
-                    <Text fontWeight="medium">Video:</Text>
-                    {createdVideo._id && mediaUrls[`video-${createdVideo._id}`] ? (
-                      <Box>
-                        <video controls width="100%">
-                          <source src={mediaUrls[`video-${createdVideo._id}`]} type="video/mp4" />
-                          Your browser does not support the video element.
-                        </video>
-                      </Box>
-                    ) : (
-                      <Text>No video available (ID: {createdVideo._id || "undefined"})</Text>
-                    )}
-                  </Box>
-
-                  {/* Display Images */}
-                  <Box>
-                    <Text fontWeight="medium">Images:</Text>
-                    {Array.isArray(createdVideo.images) && createdVideo.images.length > 0 ? (
-                      <Flex gap={2} flexWrap="wrap">
-                        {createdVideo.images.map((image, imgIndex) => (
-                          <Box key={image._id || imgIndex}>
-                            <Image
-                              loading="lazy"
-                              src={mediaUrls[`image-${image._id}`] }
-                              alt={`Generated Image ${imgIndex + 1}`}
-                              boxSize="200px"
-                              objectFit="cover"
-                              
-                            />
-                          </Box>
-                        ))}
-                      </Flex>
-                    ) : (
-                      <Text>No images available</Text>
-                    )}
-                  </Box>
-
-                  <Box>
-                    <Text fontWeight="medium">Generated Text:</Text>
-                    {createdVideo.generatedText ? (
-                      <Text>{createdVideo.generatedText.content || "No generated text available"}</Text>
-                    ) : (
-                      <Text>No generated text available</Text>
-                    )}
-                  </Box>
-                </Box>
-              ) : (
-                <Text textAlign="center" color="gray.500">
-                  <MessageWelcome/>
-                </Text>
-              )}
+              <Text textAlign="center" color="gray.500">
+                <MessageWelcome />
+              </Text>
             </Box>
 
             <Box
@@ -371,10 +259,10 @@ const VideoCreatePage = () => {
                     <SelectRoot
                       required
                       collection={durations}
-                      value={duration || ""}  
+                      value={duration ? [duration] : []}
                       onValueChange={(e) => {
-                        const newValue = e.value;
-                        setDuration(newValue); 
+                        const newValue = Array.isArray(e.value) ? e.value[0] : e.value;
+                        setDuration(newValue || "");
                       }}
                     >
                       <SelectTrigger
@@ -383,20 +271,19 @@ const VideoCreatePage = () => {
                         position="relative"
                       >
                         <Box position="absolute" left="0.75rem" top="50%" transform="translateY(-50%)">
-                          <LuClock size="18px" /> 
+                          <LuClock size="18px" />
                         </Box>
                         <SelectValueText placeholder="Duration" />
                       </SelectTrigger>
-                      <SelectContent >
+                      <SelectContent>
                         {durations.items.map((option) => (
                           <SelectItem item={option} key={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
-                    </SelectRoot> 
+                    </SelectRoot>
                   </Box>
-                  {/* Select radio  */}
                   <Box
                     width={"30%"}
                     transition="all 0.2s ease"
@@ -411,16 +298,16 @@ const VideoCreatePage = () => {
                         setRatio(selectedRatio);
                       }}
                     >
-                       <SelectTrigger
-                          transition="all 0.2s ease"
-                          paddingLeft="2rem"  // chừa chỗ icon
-                          position="relative"
-                        >
-                          <Box position="absolute" left="8px" top="50%" transform="translateY(-50%)">
-                            <LuImage size={16} />
-                          </Box>
-                          <SelectValueText placeholder="Ratio" />
-                        </SelectTrigger>
+                      <SelectTrigger
+                        transition="all 0.2s ease"
+                        paddingLeft="2rem"
+                        position="relative"
+                      >
+                        <Box position="absolute" left="8px" top="50%" transform="translateY(-50%)">
+                          <LuImage size={16} />
+                        </Box>
+                        <SelectValueText placeholder="Ratio" />
+                      </SelectTrigger>
                       <SelectContent>
                         {ratios.items.map((option) => (
                           <SelectItem item={option} key={option.value}>
@@ -430,8 +317,6 @@ const VideoCreatePage = () => {
                       </SelectContent>
                     </SelectRoot>
                   </Box>
-
-                  {/* Select voice  */}
                   <Box
                     width={"30%"}
                     transition="all 0.2s ease"
@@ -440,34 +325,31 @@ const VideoCreatePage = () => {
                     <SelectRoot
                       required
                       collection={voices}
-                      value={voice || " "}
+                      value={voice ? [voice] : []} // Đảm bảo value là mảng
                       onValueChange={(e) => {
-                        const selectedVoice = e.value;
-                        setVoice(selectedVoice);
+                        const selectedVoice = Array.isArray(e.value) ? e.value[0] : e.value;
+                        setVoice(selectedVoice || "");
                       }}
                     >
                       <SelectTrigger
                         transition="all 0.2s ease"
-                        paddingLeft="2rem"  
+                        paddingLeft="2rem"
                         position="relative"
                       >
                         <Box position="absolute" left="8px" top="50%" transform="translateY(-50%)">
-                            <RiChatVoiceAiLine  size="18px" />
+                          <RiChatVoiceAiLine size="18px" />
                         </Box>
                         <SelectValueText placeholder="Voice" />
                       </SelectTrigger>
                       <SelectContent>
                         {voices.items.map((option) => (
-                          <SelectItem
-                            item={option} key={option.value}
-                          >
+                          <SelectItem item={option} key={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </SelectRoot>
                   </Box>
-
                   <Button
                     p={3}
                     cursor="pointer"
@@ -487,7 +369,7 @@ const VideoCreatePage = () => {
                 </HStack>
 
                 <HStack pb={2} px={2} spacing={4} justifyContent="space-between">
-                <Box
+                  <Box
                     width={"30%"}
                     marginEnd="auto"
                     transition="all 0.2s ease"
@@ -502,18 +384,17 @@ const VideoCreatePage = () => {
                         setFile(selectedFile);
                       }}
                       required
-                    > 
+                    >
                       <FileUpload.HiddenInput />
-                      <Flex 
+                      <Flex
                         transition="all 0.2s ease"
-                        paddingLeft="2rem"  // chừa chỗ icon
+                        paddingLeft="2rem"
                         position="relative"
                       >
                         <Box position="absolute" left="8px" top="50%" transform="translateY(-50%)">
                           <LuMusic size="18px" />
                         </Box>
                         <InputGroup
-                          // startElement={}
                           endElement={
                             <FileUpload.ClearTrigger asChild>
                               <CloseButton
@@ -537,7 +418,6 @@ const VideoCreatePage = () => {
                     </FileUpload.Root>
                   </Box>
                 </HStack>
-                
               </form>
             </Box>
           </VStack>

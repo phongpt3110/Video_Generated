@@ -13,7 +13,7 @@ import VideoManagement from "@/components/admin/Video/VideoManagement";
 
 import UserLayout from "@/layouts/UserLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Profile from "@/components/user/Profile";
+// import Profile from "@/components/user/Profile";
 
 
 
@@ -70,26 +70,6 @@ const AppRoutes = (accessToken) => {
           <Route path="users/edit/:id" element={<UserForm/>}></Route>
           <Route path="videos" element={<VideoManagement/>}></Route>
         </Route>
-        {/* <Route path="/admin/users" element= {
-           <ProtectedRoute requiredRole='admin'>
-              <UserManagement/>
-            </ProtectedRoute>
-          }/>
-        <Route path="/admin/users/add" element={
-          <ProtectedRoute requiredRole='admin'>
-            <UserForm />
-          </ProtectedRoute>
-        }/>
-        <Route path="/admin/users/edit/:id" element={          
-          <ProtectedRoute requiredRole='admin'>
-            <UserForm />
-          </ProtectedRoute>
-        } /> 
-        <Route path="/admin/videos" element={          
-          <ProtectedRoute requiredRole='admin'>
-            <VideoManagement />
-          </ProtectedRoute>
-        } /> */}
 
 
         {/* Page User */}
@@ -99,18 +79,16 @@ const AppRoutes = (accessToken) => {
           </ProtectedRoute>
         }>
           <Route path="create" element={<VideoGenerate/>}/>
-          {/* <Route path="" element={<Home/>} /> */}
-          {/* <Route path="list" element={<VideoListPage />} /> */}
         </Route>
 
-        <Route
+        {/* <Route
           path="/profile"
           element={
             <ProtectedRoute>
             <Profile />
           </ProtectedRoute>
           }
-        />
+        /> */}
 
 
       </Routes>
