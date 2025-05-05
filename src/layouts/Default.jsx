@@ -13,7 +13,7 @@ import VideoManagement from "@/components/admin/Video/VideoManagement";
 
 import UserLayout from "@/layouts/UserLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
-// import Profile from "@/components/user/Profile";
+import Profile from "@/components/user/Profile";
 
 
 
@@ -81,14 +81,14 @@ const AppRoutes = (accessToken) => {
           <Route path="create" element={<VideoGenerate/>}/>
         </Route>
 
-        {/* <Route
+        <Route
           path="/profile"
           element={
             <ProtectedRoute>
             <Profile />
           </ProtectedRoute>
           }
-        /> */}
+        />
 
 
       </Routes>

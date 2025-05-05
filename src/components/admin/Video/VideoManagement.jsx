@@ -94,7 +94,7 @@ const VideoManagement = () => {
     if (accessToken) {
       fetchVideos();
     }
-  }, [startDate, endDate, searchTerm, accessToken]);
+  }, [startDate, endDate, searchTerm, accessToken, currentPage]);
 
   // --- Handle Delete Video with Confirmation ---
   const handleDeleteVideo = async (videoId) => {
